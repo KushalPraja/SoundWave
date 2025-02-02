@@ -217,7 +217,7 @@ function updateLines(spectrum, bass, treble, mid, volume) {
   // Completely flatten old lines over time
   for (let i = 1; i < lines.length; i++) {
     for (let j = 0; j < lines[i].length; j++) {
-      lines[i][j] = lerp(lines[i][j], 0, 0); // Adjust the 0.1 value to control flattening speed
+      lines[i][j] = lerp(lines[i][j], 0, 0  ); // Adjust the 0.1 value to control flattening speed
     }
   }
 }
@@ -360,9 +360,8 @@ function updateUI() {
   let totalTime = formatTime(song.duration());
   select('.time-display').html(`${currentTime} / ${totalTime}`);
   
-  // Remove or comment out:
-  // let volumeScale = map(smoothedVolume, 0, 1, 0.5, 3);
-  // document.documentElement.style.setProperty('--intensity-scale', volumeScale);
+  //let volumeScale = map(smoothedVolume, 0, 1, 0.5, 3);
+  //document.documentElement.style.setProperty('--intensity-scale', volumeScale);
 }
 
 function formatTime(seconds) {
