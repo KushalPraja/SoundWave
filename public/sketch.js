@@ -1,15 +1,22 @@
+// Global variables and constants
 let song;
 let fft;
 let lines = [];
-const NUM_LINES = 50;  // More lines for fuller effect
-const LINE_SPACING = 12;  // Tighter spacing
-const AMPLITUDE = 150;  // Higher base amplitude
+const NUM_LINES = 50;       // Maximum number of lines stored
+const LINE_SPACING = 4;    // Spacing between lines
+const AMPLITUDE = 150;      // Base amplitude of the wave
 let isPlaying = false;
 let currentHue = 0;
 let smoothedVolume = 0;
 let smoothedBass = 0;
 let smoothedTreble = 0;
-const EDGE_PADDING = 50; // Add this line
+const EDGE_PADDING = 50;    // Padding to zero-out the edges
+const BASS_INTENSITY = 5;      // Multiplier for bass impact (try 1.0 - 4.0)
+const TREBLE_INTENSITY = 5;    // Multiplier for treble impact (try 1.0 - 3.0)
+const CURVE_SMOOTHNESS = 0.7;    // Controls curve smoothness (0.1 - 1.0, higher = smoother)
+const MAX_CURVES = 3;            // Maximum number of major curves (2 - 5)
+const ANIMATION_SPEED = 0.025;   // Speed of animation (0.01 - 0.05, higher = faster)
+
 
 function preload() {
   song = loadSound('song.mp3');
@@ -20,10 +27,10 @@ function setup() {
   fft = new p5.FFT(0.8, 512);  // Higher FFT resolution
   colorMode(HSL);
   
-  // Initialize lines with full width
+  // Initialize the lines array
   initializeLines();
   
-  // Create UI
+  // Create UI elements
   createUI();
   
   // Set initial volume
@@ -31,98 +38,130 @@ function setup() {
 }
 
 function initializeLines() {
+  // Pre-fill the lines array with empty arrays
   lines = [];
   for (let i = 0; i < NUM_LINES; i++) {
-    lines[i] = new Array(width).fill(0);
+    lines.push(new Array(width).fill(0));
   }
 }
 
 function draw() {
-  // Animated gradient background
+  // Draw animated gradient background
   setGradientBackground();
   
-  // Analyze audio (from original draw)
+  // Audio analysis
   let spectrum = fft.analyze();
   let bass = fft.getEnergy("bass");
   let treble = fft.getEnergy("treble");
   let mid = fft.getEnergy("mid");
   let volume = song.getVolume();
   
-  // Smooth audio values
-  smoothedVolume = lerp(smoothedVolume, volume, 0.1);
-  smoothedBass = lerp(smoothedBass, bass, 0.1);
+  // Smooth audio values with adaptive smoothing factors
+  smoothedVolume = lerp(smoothedVolume, volume, 0.15);
+  smoothedBass = lerp(smoothedBass, bass, 0.12);
   smoothedTreble = lerp(smoothedTreble, treble, 0.1);
   
-  // Update lines (from original draw)
+  // Update wave lines based on audio analysis
   updateLines(spectrum, smoothedBass, smoothedTreble, mid, smoothedVolume);
   
-  // Draw visualization (from original draw)
+  // Draw the updated visualization
   drawVisualization();
   
-  // Update UI
+  // Update UI elements (progress bar, time, etc.)
   updateUI();
   
-  // Update color cycle
-  currentHue = (currentHue + 0.1) % 360;
+  // Gradually update the color cycle using a dynamic step based on treble
+  currentHue = (currentHue + map(smoothedTreble, 0, 255, 0.08, 0.15)) % 360;
 }
 
 function updateLines(spectrum, bass, treble, mid, volume) {
-  lines.pop();
   let newLine = [];
+  let step = 5;
+  let currentAmplitude = AMPLITUDE * (1 + volume * 0.8);
+  let time = frameCount * 0.015;
   
-  // Calculate base amplitude modified by volume
-  let currentAmplitude = AMPLITUDE * (1 + volume);
-  
-  for (let x = 0; x < width; x++) {
-    // Get frequency data
+  // Define the center region where the effect should occur
+  let centerStart = width * 0.3;  // Start at 30% of width
+  let centerEnd = width * 0.7;    // End at 70% of width
+
+  for (let x = 0; x < width; x += step) {
     let index = floor(map(x, 0, width, 0, spectrum.length));
     let value = map(spectrum[index], 0, 255, 0, currentAmplitude);
     
-    // Calculate wave shape
+    // Calculate distance from center as a percentage (0 to 1)
     let normalizedX = x / width;
-    let distanceFromCenter = abs(normalizedX - 0.5);
+    let distanceFromCenter = abs(normalizedX - 0.5) * 2; // Will be 0 at center, 1 at edges
     
-    // Dynamic falloff based on bass
-    let falloffFactor = map(bass, 0, 255, 0.05, 0.02);
-    let falloff = exp(-distanceFromCenter * distanceFromCenter / falloffFactor);
-    
-    // Complex wave calculation
-    let time = frameCount * 0.02;
-    let bassWave = sin(time * 0.5 + x * 0.002) * map(bass, 0, 255, 0, 30);
-    let trebleWave = sin(time * 2 + x * 0.005) * map(treble, 0, 255, 0, 15);
-    let midWave = cos(time + x * 0.003) * map(mid, 0, 255, 0, 20);
+    // Create smooth transition between effect and straight lines
+    let transitionMultiplier = 0;
+    if (x > centerStart && x < centerEnd) {
+      // Smooth transition in the center region
+      let normalizedPosition = (x - centerStart) / (centerEnd - centerStart);
+      transitionMultiplier = sin(normalizedPosition * PI); // Creates smooth bell curve
+    }
+
+    // Apply audio effects only in the center region
+    let audioEffect = 0;
+    if (transitionMultiplier > 0) {
+      let bassWave = sin(time * 0.8 + x * 0.002) * map(bass, 0, 255, 0, 20);
+      let trebleWave = sin(time * 2.0 + x * 0.007) * map(treble, 0, 255, 0, 10);
+      let midWave = cos(time + x * 0.005) * map(mid, 0, 255, 0, 15);
+      
+      audioEffect = (bassWave + trebleWave + midWave) * transitionMultiplier;
+    }
+
+    // Add some subtle noise for texture in the center
+    let noise = random(-2, 2) * transitionMultiplier;
     
     // Combine all effects
-    newLine[x] = (value * falloff) + bassWave + trebleWave + midWave;
+    let y = value * transitionMultiplier + audioEffect + noise;
+    
+    newLine[x] = -y; // Negative to make peaks go up
   }
-  
+
   lines.unshift(newLine);
+  if (lines.length > NUM_LINES) {
+    lines.pop();
+  }
+  // Completely flatten old lines over time
+  for (let i = 1; i < lines.length; i++) {
+    for (let j = 0; j < lines[i].length; j++) {
+      lines[i][j] = lerp(lines[i][j], 0, 0.06); // Adjust the 0.1 value to control flattening speed
+    }
+  }
 }
 
 function drawVisualization() {
-  let bassIntensity = map(smoothedBass, 0, 255, 0.5, 1.2);
-  let trebleIntensity = map(smoothedTreble, 0, 255, 0.3, 0.8);
-  
+  let bassIntensity = map(smoothedBass, 0, 255, 0.8, 1.5);
+
   for (let i = 0; i < lines.length; i++) {
-    let lineOpacity = map(i, 0, lines.length, 1, 0.1);
-    let brightness = map(i, 0, lines.length, 80, 40);
-    stroke(currentHue, 80, brightness, lineOpacity);
-    strokeWeight(2.5 * bassIntensity);
+    let opacity = map(i, 0, lines.length, 1, 0.12);
+    let brightness = map(i, 0, lines.length, 90, 35);
+
+    stroke(currentHue, 85, brightness, opacity);
+    strokeWeight(1.5 * bassIntensity);
     noFill();
-    
+
     beginShape();
-    // Start point
-    vertex(0, i * LINE_SPACING + height/4);
+    // Start with straight line
+    vertex(0, i * LINE_SPACING + height / 3);
     
-    // Draw curve points
-    for (let x = 0; x < width; x += 4) {  // Step size of 4 for performance
-      let y = i * LINE_SPACING + height/4 + (lines[i][x] * trebleIntensity);
-      let waveOffset = sin(frameCount * 0.03 + i * 0.1) * 2;
-      curveVertex(x, y + waveOffset);
+    // Draw the main curve with smooth transitions
+    for (let x = 0; x < width; x += 5) {
+      let yOffset = i * LINE_SPACING + height / 3;
+      let y = yOffset + lines[i][x];
+      
+      if (x === 0 || x >= width - 5) {
+        // Use regular vertex for straight edges
+        vertex(x, yOffset);
+      } else {
+        // Use curveVertex for smooth curves in the middle
+        curveVertex(x, y);
+      }
     }
     
-    // End point
-    vertex(width, i * LINE_SPACING + height/4);
+    // End with straight line
+    vertex(width, i * LINE_SPACING + height / 3);
     endShape();
   }
 }
@@ -154,7 +193,7 @@ function createUI() {
     </div>
   `);
   
-  // Add event listeners
+  // Add event listeners for play/pause and volume change
   select('#playButton').mousePressed(togglePlay);
   select('#volumeSlider').input(() => {
     let vol = select('#volumeSlider').value();
@@ -163,71 +202,17 @@ function createUI() {
   });
 }
 
-
 function setGradientBackground() {
+  // Define two colors for the gradient using the current hue values
   let c1 = color(currentHue, 20, 15);
   let c2 = color((currentHue + 180) % 360, 20, 8);
   
+  // Draw the gradient by interpolating line-by-line
   for (let y = 0; y < height; y++) {
     let inter = map(y, 0, height, 0, 1);
     let c = lerpColor(c1, c2, inter);
     stroke(c);
     line(0, y, width, y);
-  }
-}
-
-function updateVisualizer() {
-  strokeWeight(2.5);
-  stroke(currentHue, 80, 80, 0.8);
-  noFill();
-  
-  let spectrum = fft.analyze();
-  let bass = fft.getEnergy("bass");
-  let treble = fft.getEnergy("treble");
-  
-  // Update lines
-  lines.pop();
-  let newLine = [];
-  for (let x = 0; x < width; x++) {
-    let index = floor(map(x, 0, width, 0, spectrum.length));
-    let value = map(spectrum[index], 0, 255, 0, AMPLITUDE);
-    
-    if (x < EDGE_PADDING || x > width - EDGE_PADDING) {
-      newLine[x] = 0;
-    } else {
-      let normalizedX = (x - EDGE_PADDING) / (width - 2 * EDGE_PADDING);
-      let distanceFromCenter = abs(normalizedX - 0.5);
-      let falloff = exp(-distanceFromCenter * distanceFromCenter / 0.03);
-      
-      // Enhanced animation
-      let time = frameCount * 0.02;
-      let bassInfluence = map(bass, 0, 255, 0, 20);
-      let trebleInfluence = map(treble, 0, 255, 0, 10);
-      let animationValue = sin(time + x * 0.01) * 5 + 
-                          cos(time * 0.5 + x * 0.02) * bassInfluence +
-                          sin(time * 2 + x * 0.03) * trebleInfluence;
-      
-      newLine[x] = value * falloff + animationValue;
-    }
-  }
-  lines.unshift(newLine);
-  
-  // Draw lines with enhanced effects
-  for (let i = 0; i < lines.length; i++) {
-    let alpha = map(i, 0, lines.length, 1, 0.2);
-    stroke(currentHue, 80, 80, alpha);
-    
-    beginShape();
-    vertex(0, i * LINE_SPACING + height/3);
-    
-    for (let x = 0; x < width; x += 3) {
-      let y = i * LINE_SPACING + height/3 + lines[i][x];
-      let waveOffset = sin(frameCount * 0.05 + i * 0.1) * 2;
-      curveVertex(x, y + waveOffset);
-    }
-    
-    vertex(width, i * LINE_SPACING + height/3);
-    endShape();
   }
 }
 
@@ -240,7 +225,7 @@ function updateUI() {
     let totalTime = formatTime(song.duration());
     select('.time-display').html(`${currentTime} / ${totalTime}`);
     
-    // Update visualizer intensity based on volume
+    // Update the visualization intensity based on the current volume
     let volumeScale = map(smoothedVolume, 0, 1, 0.5, 2);
     document.documentElement.style.setProperty('--intensity-scale', volumeScale);
   }
@@ -270,15 +255,13 @@ function updateVolumeIcon(volume) {
   else icon.html('🔇');
 }
 
+// Consolidated windowResized function: resize canvas and reinitialize lines.
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  lines = [];
-  for (let i = 0; i < NUM_LINES; i++) {
-    lines[i] = new Array(width).fill(0);
-  }
+  initializeLines();
 }
 
-// Add modern CSS styles
+// Insert modern CSS styles for the UI and overall presentation
 document.head.insertAdjacentHTML('beforeend', `
   <style>
     body {
@@ -412,9 +395,3 @@ document.head.insertAdjacentHTML('beforeend', `
     }
   </style>
 `);
-
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
-  initializeLines(); // Use the proper initialization function
-}
-
