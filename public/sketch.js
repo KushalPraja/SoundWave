@@ -4,7 +4,7 @@ let fft;
 let lines = [];
 const NUM_LINES = 50;       // Maximum number of lines stored
 const LINE_SPACING = 4;    // Spacing between lines
-const AMPLITUDE = 150;      // Base amplitude of the wave
+const AMPLITUDE = 250;      // Base amplitude of the wave
 let isPlaying = false;
 let currentHue = 0;
 let smoothedVolume = 0;
@@ -19,7 +19,7 @@ const ANIMATION_SPEED = 0.025;   // Speed of animation (0.01 - 0.05, higher = fa
 
 
 function preload() {
-  song = loadSound('song.mp3');
+  song = loadSound('song2.mp3');
 }
 
 function setup() {
@@ -126,7 +126,7 @@ function updateLines(spectrum, bass, treble, mid, volume) {
   // Completely flatten old lines over time
   for (let i = 1; i < lines.length; i++) {
     for (let j = 0; j < lines[i].length; j++) {
-      lines[i][j] = lerp(lines[i][j], 0, 0.06); // Adjust the 0.1 value to control flattening speed
+      lines[i][j] = lerp(lines[i][j], 0, 0.0); // Adjust the 0.1 value to control flattening speed
     }
   }
 }
