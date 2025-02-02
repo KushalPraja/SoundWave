@@ -313,40 +313,35 @@ function createUI() {
   });
 }
 
+// Replace the setGradientBackground function with the following:
+
 function setGradientBackground() {
-  // Create a gradient from top to bottom
-  for (let y = 0; y < height; y++) {
-    let inter = map(y, 0, height, 0, 1);
-    let c = lerpColor(
-      color(colorHue, 80, 10),  // Top color
-      color(colorHue, 80, 2),   // Bottom color, darker
-      inter
-    );
-    stroke(c);
-    line(0, y, width, y);
-  }
+  let ctx = drawingContext;
+  // Create a vertical linear gradient as one panel
+  let gradient = ctx.createLinearGradient(0, 0, 0, height);
+  let topColor = `hsl(${colorHue}, 80%, 10%)`;    // Top color
+  let bottomColor = `hsl(${colorHue}, 80%, 2%)`;   // Bottom color
+  gradient.addColorStop(0, topColor);
+  gradient.addColorStop(1, bottomColor);
   
-  // Draw stars with matching hue
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+  
+  // ...existing star drawing code...
   push();
   blendMode(SCREEN);
   noStroke();
   stars.forEach(star => {
-    // Update position
+    // Update star positions, trails, and drawing logic
     star.x += cos(star.angle) * star.speed;
     star.y += sin(star.angle) * star.speed;
-    
-    // Add current position to trail
     star.trail.unshift({x: star.x, y: star.y});
     if (star.trail.length > TRAIL_LENGTH) star.trail.pop();
-    
-    // Draw trail
     star.trail.forEach((pos, i) => {
       let alpha = map(i, 0, star.trail.length, 0.3, 0);
       fill(colorHue, 50, 80, alpha);
       circle(pos.x, pos.y, star.size);
     });
-    
-    // Wrap around screen
     if (star.x < 0) star.x = width;
     if (star.x > width) star.x = 0;
     if (star.y < 0) star.y = height;

@@ -17,7 +17,6 @@
       color: white;
       z-index: 1000;
       overflow: hidden;
-      padding-top: 60px;
     }
 
     .animated-bg {
@@ -38,27 +37,24 @@
     }
 
     .start-title {
-      font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
       font-size: 4.5rem;
-      font-weight: 600;
-      margin: 0 0 10px 0;
+      font-weight: 800;
+      margin: 0;
       background: linear-gradient(to right, #fff, #666);
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
-      letter-spacing: 0px;
+      letter-spacing: -2px;
       position: relative;
       animation: fadeIn 1s ease;
     }
 
     .start-subtitle {
-      font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
       font-size: 1.2rem;
       color: #666;
-      margin-top: 0;
-      letter-spacing: 2px;
+      margin-top: 1rem;
+      letter-spacing: 4px;
       text-transform: uppercase;
-      opacity: 0.9;
     }
 
     .start-button {
@@ -163,35 +159,19 @@
       color: #fff;
     }
 
-    /* Apple-inspired navbar */
-    .apple-nav {
+    .date-display {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(10px);
-      z-index: 1001;
-    }
-    .apple-nav .nav-logo {
-      font-size: 1.5rem;
-      font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
+      top: 20px;
+      right: 20px;
+      font-family: 'Geist Mono', monospace;
       color: #fff;
-      letter-spacing: 1px;
-      margin: 0;
+      font-size: 14px;
+      z-index: 2000;
+      opacity: 0.8;
     }
   </style>
 </head>
 <body>
-  <!-- New Apple-like navbar -->
-  <nav class="apple-nav">
-    <h1 class="nav-logo">SOUNDWAVE</h1>
-  </nav>
-
   <div class="github-link">
     <a href="https://github.com/KushalPraja" target="_blank" aria-label="Follow on GitHub">
       <svg width="24" height="24" stroke="currentColor" fill="currentColor" viewBox="0 0 16 16">
@@ -200,6 +180,7 @@
     </a>
     <span class="geist-mono">KushalPraja</span>
   </div>
+  <div class="date-display"></div>
   <div id="start-menu" class="start-menu">
     <div class="animated-bg"></div>
     <div class="logo-container">
@@ -225,5 +206,22 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
   <script src="sketch.js"></script>
+  <script>
+    function updateDate() {
+      const now = new Date();
+      const options = { 
+        weekday: 'short', 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      };
+      document.querySelector('.date-display').textContent = 
+        now.toLocaleDateString('en-US', options);
+    }
+    updateDate();
+    setInterval(updateDate, 1000);
+  </script>
 </body>
 </html>
