@@ -5,8 +5,86 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Music Visualization</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .start-menu {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+      color: white;
+      z-index: 1000;
+      gap: 20px;
+    }
+
+    .start-title {
+      font-size: 2.5rem;
+      margin-bottom: 2rem;
+      font-weight: 200;
+    }
+
+    .start-button {
+      padding: 15px 30px;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 50px;
+      background: #1DB954;
+      color: white;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .start-button:hover {
+      background: #1ed760;
+      transform: scale(1.05);
+    }
+
+    .loading {
+      display: none;
+      position: absolute;
+      bottom: 20%;
+      font-size: 1.2rem;
+      color: #1DB954;
+    }
+
+    .back-button {
+      background: white;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+      margin-left: 10px;
+    }
+
+    .visualization-container {
+      display: none;
+    }
+  </style>
 </head>
 <body>
+  <div id="start-menu" class="start-menu">
+    <h1 class="start-title">Music Visualizer</h1>
+    <button id="loadFileButton" class="start-button">
+      <span>Choose a Song</span>
+      <span>🎵</span>
+    </button>
+    <div id="loading" class="loading">Loading...</div>
+    <input type="file" id="fileInput" accept="audio/*" style="display: none;">
+  </div>
+
+  <div id="visualization-container" class="visualization-container">
+    <!-- p5 canvas will be attached here -->
+  </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>

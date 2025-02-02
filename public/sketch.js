@@ -1,7 +1,6 @@
-// Global variables and constants
 let song;
 let fft;
-let lines = [];
+let isLoading = false;
 const NUM_LINES = 50;       // Maximum number of lines stored
 const LINE_SPACING = 4;    // Spacing between lines
 const AMPLITUDE = 250;      // Base amplitude of the wave
@@ -17,24 +16,62 @@ const CURVE_SMOOTHNESS = 0.7;    // Controls curve smoothness (0.1 - 1.0, higher
 const MAX_CURVES = 3;            // Maximum number of major curves (2 - 5)
 const ANIMATION_SPEED = 0.025;   // Speed of animation (0.01 - 0.05, higher = faster)
 
-
 function preload() {
   song = loadSound('song2.mp3');
 }
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
+  let cnv = createCanvas(windowWidth, windowHeight);
+  cnv.parent('visualization-container');
   fft = new p5.FFT(0.8, 512);  // Higher FFT resolution
   colorMode(HSL);
   
   // Initialize the lines array
   initializeLines();
   
+  // Setup file handling
+  setupFileHandling();
+  
   // Create UI elements
   createUI();
   
   // Set initial volume
   song.setVolume(0.5);
+}
+
+function setupFileHandling() {
+  let loadButton = select('#loadFileButton');
+  let fileInput = select('#fileInput');
+  let loading = select('#loading');
+  
+  loadButton.mousePressed(() => fileInput.elt.click());
+  
+  fileInput.elt.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    isLoading = true;
+    loading.style('display', 'block');
+    
+    let url = URL.createObjectURL(file);
+    loadSound(url, 
+      // Success callback
+      (loadedSong) => {
+        song = loadedSong;
+        select('#start-menu').style('display', 'none');
+        select('#visualization-container').style('display', 'block');
+        song.setVolume(0.5);
+        isLoading = false;
+        loading.style('display', 'none');
+      },
+      // Error callback
+      (error) => {
+        console.error('Error loading song:', error);
+        isLoading = false;
+        loading.style('display', 'none');
+      }
+    );
+  });
 }
 
 function initializeLines() {
@@ -46,6 +83,11 @@ function initializeLines() {
 }
 
 function draw() {
+  if (!song || !song.isLoaded() || isLoading) {
+    setGradientBackground();
+    return;
+  }
+  
   // Draw animated gradient background
   setGradientBackground();
   
@@ -189,6 +231,9 @@ function createUI() {
         <button id="playButton" class="play-button">
           <span class="play-icon">▶</span>
         </button>
+        <button id="backButton" class="back-button">
+          <span>↩</span>
+        </button>
       </div>
     </div>
   `);
@@ -199,6 +244,18 @@ function createUI() {
     let vol = select('#volumeSlider').value();
     song.setVolume(vol);
     updateVolumeIcon(vol);
+  });
+
+  // Back button handler
+  select('#backButton').mousePressed(() => {
+    if (song) {
+      song.stop();
+      song = null;
+    }
+    isPlaying = false;
+    select('#visualization-container').style('display', 'none');
+    select('#start-menu').style('display', 'flex');
+    select('#fileInput').elt.value = ''; // Reset file input
   });
 }
 
@@ -217,18 +274,18 @@ function setGradientBackground() {
 }
 
 function updateUI() {
-  if (song.isPlaying()) {
-    let progress = song.currentTime() / song.duration();
-    select('.progress-fill').style('width', (progress * 100) + '%');
-    
-    let currentTime = formatTime(song.currentTime());
-    let totalTime = formatTime(song.duration());
-    select('.time-display').html(`${currentTime} / ${totalTime}`);
-    
-    // Update the visualization intensity based on the current volume
-    let volumeScale = map(smoothedVolume, 0, 1, 0.5, 2);
-    document.documentElement.style.setProperty('--intensity-scale', volumeScale);
-  }
+  if (!song || !song.isLoaded() || !song.isPlaying()) return;
+  
+  let progress = song.currentTime() / song.duration();
+  select('.progress-fill').style('width', (progress * 100) + '%');
+  
+  let currentTime = formatTime(song.currentTime());
+  let totalTime = formatTime(song.duration());
+  select('.time-display').html(`${currentTime} / ${totalTime}`);
+  
+  // Update the visualization intensity based on the current volume
+  let volumeScale = map(smoothedVolume, 0, 1, 0.5, 2);
+  document.documentElement.style.setProperty('--intensity-scale', volumeScale);
 }
 
 function formatTime(seconds) {
@@ -238,6 +295,8 @@ function formatTime(seconds) {
 }
 
 function togglePlay() {
+  if (!song || !song.isLoaded() || isLoading) return;
+  
   if (isPlaying) {
     song.pause();
     select('.play-icon').html('▶');
