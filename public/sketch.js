@@ -26,6 +26,10 @@ const STAR_COUNT = 100;  // Reduced count for cleaner look
 const COLOR_CYCLE_SPEED = 1;  // Consistent speed for color changes
 let colorHue = 0;  // Separate from currentHue for independent control
 
+// Add new variables for scrolling title
+let titleScrollInterval;
+let titleScrollPosition = 0;
+
 function preload() {
   song = loadSound('song2.mp3');
 }
@@ -81,6 +85,25 @@ function setupFileHandling() {
       // Success callback
       (loadedSong) => {
         song = loadedSong;
+        // Update song title in the UI
+        let songName = file.name.replace(/\.[^/.]+$/, ""); // Remove file extension
+        select('.song-title').html(songName);
+        
+        // Setup scrolling if title is too long
+        clearInterval(titleScrollInterval);
+        let titleElement = select('.song-title');
+        let containerWidth = select('.title-scroll-container').width;
+        if (titleElement.elt.scrollWidth > containerWidth) {
+          titleScrollPosition = 0;
+          titleScrollInterval = setInterval(() => {
+            titleScrollPosition++;
+            if (titleScrollPosition > titleElement.elt.scrollWidth) {
+              titleScrollPosition = -containerWidth;
+            }
+            titleElement.style('transform', `translateX(${-titleScrollPosition}px)`);
+          }, 50);
+        }
+        
         select('#start-menu').style('display', 'none');
         select('#visualization-container').style('display', 'block');
         song.setVolume(0.5);
@@ -240,7 +263,11 @@ function createUI() {
     <div class="player-container">
       <div class="top-controls">
         <div class="song-info">
-          <span class="song-title">Now Playing</span>
+          <div class="title-scroll-container">
+            <div class="song-title-scroll">
+              <span class="song-title">Select a song to play</span>
+            </div>
+          </div>
           <span class="time-display">0:00 / 0:00</span>
         </div>
         <div class="volume-container">
@@ -274,6 +301,7 @@ function createUI() {
 
   // Back button handler
   select('#backButton').mousePressed(() => {
+    clearInterval(titleScrollInterval);
     if (song) {
       song.stop();
       song = null;
@@ -286,20 +314,19 @@ function createUI() {
 }
 
 function setGradientBackground() {
-  background(0);
-  // Simpler gradient using current colorHue
+  // Create a gradient from top to bottom
   for (let y = 0; y < height; y++) {
     let inter = map(y, 0, height, 0, 1);
     let c = lerpColor(
-      color(colorHue, 70, 5),
-      color((colorHue + 180) % 360, 70, 3),
+      color(colorHue, 80, 10),  // Top color
+      color(colorHue, 80, 2),   // Bottom color, darker
       inter
     );
     stroke(c);
     line(0, y, width, y);
   }
   
-  // Draw stars in the same hue
+  // Draw stars with matching hue
   push();
   blendMode(SCREEN);
   noStroke();
@@ -312,7 +339,7 @@ function setGradientBackground() {
     star.trail.unshift({x: star.x, y: star.y});
     if (star.trail.length > TRAIL_LENGTH) star.trail.pop();
     
-    // Draw trail using same colorHue
+    // Draw trail
     star.trail.forEach((pos, i) => {
       let alpha = map(i, 0, star.trail.length, 0.3, 0);
       fill(colorHue, 50, 80, alpha);
@@ -407,10 +434,20 @@ document.head.insertAdjacentHTML('beforeend', `
       flex-direction: column;
     }
     
+    .title-scroll-container {
+      width: 300px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .song-title-scroll {
+      white-space: nowrap;
+      position: relative;
+    }
+    
     .song-title {
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 4px;
+      display: inline-block;
+      transition: transform 0.1s linear;
     }
     
     .time-display {
