@@ -3,7 +3,7 @@ let fft;
 let isLoading = false;
 const NUM_LINES = 50;       // Maximum number of lines stored
 const LINE_SPACING = 4;    // Spacing between lines
-const AMPLITUDE = 250;      // Base amplitude of the wave
+const AMPLITUDE = 200;      // Base amplitude of the wave
 let isPlaying = false;
 let currentHue = 0;
 let smoothedVolume = 0;
@@ -168,7 +168,7 @@ function updateLines(spectrum, bass, treble, mid, volume) {
   // Completely flatten old lines over time
   for (let i = 1; i < lines.length; i++) {
     for (let j = 0; j < lines[i].length; j++) {
-      lines[i][j] = lerp(lines[i][j], 0, 0.0); // Adjust the 0.1 value to control flattening speed
+      lines[i][j] = lerp(lines[i][j], 0, 0); // Adjust the 0.1 value to control flattening speed
     }
   }
 }
@@ -181,7 +181,7 @@ function drawVisualization() {
     let brightness = map(i, 0, lines.length, 90, 35);
 
     stroke(currentHue, 85, brightness, opacity);
-    strokeWeight(1.5 * bassIntensity);
+    strokeWeight(0.5 * bassIntensity); // Changed from 1.5 to 0.5 for thinner lines
     noFill();
 
     beginShape();
