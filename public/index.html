@@ -17,6 +17,7 @@
       color: white;
       z-index: 1000;
       overflow: hidden;
+      padding-top: 60px;
     }
 
     .animated-bg {
@@ -37,24 +38,27 @@
     }
 
     .start-title {
+      font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
       font-size: 4.5rem;
-      font-weight: 800;
-      margin: 0;
+      font-weight: 600;
+      margin: 0 0 10px 0;
       background: linear-gradient(to right, #fff, #666);
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
-      letter-spacing: -2px;
+      letter-spacing: 0px;
       position: relative;
       animation: fadeIn 1s ease;
     }
 
     .start-subtitle {
+      font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
       font-size: 1.2rem;
       color: #666;
-      margin-top: 1rem;
-      letter-spacing: 4px;
+      margin-top: 0;
+      letter-spacing: 2px;
       text-transform: uppercase;
+      opacity: 0.9;
     }
 
     .start-button {
@@ -133,9 +137,69 @@
     .visualization-container {
       display: none;
     }
+
+    .github-link {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 2000;
+    }
+    .github-link svg {
+      width: 24px;
+      height: 24px;
+      fill: #fff;
+      transition: transform 0.2s ease;
+    }
+    .github-link svg:hover {
+      transform: scale(1.1);
+    }
+
+    @import url('https://fonts.cdnfonts.com/css/geist-mono');
+
+    .geist-mono {
+      font-family: 'Geist Mono', monospace;
+      margin-left: 8px;
+      font-size: 14px;
+      color: #fff;
+    }
+
+    /* Apple-inspired navbar */
+    .apple-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      z-index: 1001;
+    }
+    .apple-nav .nav-logo {
+      font-size: 1.5rem;
+      font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
+      color: #fff;
+      letter-spacing: 1px;
+      margin: 0;
+    }
   </style>
 </head>
 <body>
+  <!-- New Apple-like navbar -->
+  <nav class="apple-nav">
+    <h1 class="nav-logo">SOUNDWAVE</h1>
+  </nav>
+
+  <div class="github-link">
+    <a href="https://github.com/KushalPraja" target="_blank" aria-label="Follow on GitHub">
+      <svg width="24" height="24" stroke="currentColor" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M8 0a8 8 0 00-2.53 15.59c.4.07.55-.17.55-.38v-1.36c-2 .43-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52 0-.53.63-.01 1.09.58 1.24.82.73 1.25 1.9.89 2.36.68a1.73 1.73 0 01.53-1.07c-1.78-.2-3.66-.89-3.66-3.93 0-.87.31-1.58.82-2.13-.08-.2-.36-1.02.08-2.13 0 0 .67-.21 2.2.82a7.7 7.7 0 014 0c1.53-1.03 2.2-.82 2.2-.82.44 1.11.16 1.93.08 2.13.51.55.82 1.26.82 2.13 0 3.06-1.88 3.73-3.67 3.93.23.2.46.6.46 1.23v1.82c0 .21.14.46.55.38A8 8 0 008 0"/>
+      </svg>
+    </a>
+    <span class="geist-mono">KushalPraja</span>
+  </div>
   <div id="start-menu" class="start-menu">
     <div class="animated-bg"></div>
     <div class="logo-container">

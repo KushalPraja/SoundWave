@@ -1,3 +1,5 @@
+[![GitHub - KushalPraja](https://img.shields.io/badge/GitHub-KushalPraja-blue)](https://github.com/KushalPraja)
+
 # Music Visualization Project
 
 This project is a music visualization tool that creates dynamic visual representations of audio files. It is built using p5.js and the YouTube API for fetching songs. The visualization aims to recreate the iconic "Unknown Pleasures" album cover by Joy Division.
