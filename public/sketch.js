@@ -16,6 +16,16 @@ const CURVE_SMOOTHNESS = 0.7;    // Controls curve smoothness (0.1 - 1.0, higher
 const MAX_CURVES = 3;            // Maximum number of major curves (2 - 5)
 const ANIMATION_SPEED = 0.025;   // Speed of animation (0.01 - 0.05, higher = faster)
 
+// Add variables for stars
+let stars = [];
+const TRAIL_LENGTH = 15;
+const STAR_SPEED = 1.5;
+const STAR_COUNT = 100;  // Reduced count for cleaner look
+
+// Add color cycling constant
+const COLOR_CYCLE_SPEED = 1;  // Consistent speed for color changes
+let colorHue = 0;  // Separate from currentHue for independent control
+
 function preload() {
   song = loadSound('song2.mp3');
 }
@@ -37,6 +47,19 @@ function setup() {
   
   // Set initial volume
   song.setVolume(0.5);
+  
+  // Create star positions
+  stars = [];
+  for (let i = 0; i < STAR_COUNT; i++) {
+    stars.push({
+      x: random(width),
+      y: random(height),
+      size: random(0.5, 1.5),
+      speed: random(STAR_SPEED * 0.5, STAR_SPEED * 1.5),
+      angle: random(TWO_PI),
+      trail: []
+    });
+  }
 }
 
 function setupFileHandling() {
@@ -88,6 +111,9 @@ function draw() {
     return;
   }
   
+  // Update colors continuously regardless of audio
+  colorHue = (colorHue + COLOR_CYCLE_SPEED) % 360;
+  
   // Draw animated gradient background
   setGradientBackground();
   
@@ -113,7 +139,7 @@ function draw() {
   updateUI();
   
   // Gradually update the color cycle using a dynamic step based on treble
-  currentHue = (currentHue + map(smoothedTreble, 0, 255, 0.08, 0.15)) % 360;
+  currentHue = (currentHue + COLOR_CYCLE_SPEED) % 360;
 }
 
 function updateLines(spectrum, bass, treble, mid, volume) {
@@ -179,8 +205,8 @@ function drawVisualization() {
   for (let i = 0; i < lines.length; i++) {
     let opacity = map(i, 0, lines.length, 1, 0.12);
     let brightness = map(i, 0, lines.length, 90, 35);
-
-    stroke(currentHue, 85, brightness, opacity);
+    // Use same colorHue for lines
+    stroke(colorHue, 100, brightness, opacity);
     strokeWeight(0.5 * bassIntensity); // Changed from 1.5 to 0.5 for thinner lines
     noFill();
 
@@ -260,17 +286,46 @@ function createUI() {
 }
 
 function setGradientBackground() {
-  // Define two colors for the gradient using the current hue values
-  let c1 = color(currentHue, 20, 15);
-  let c2 = color((currentHue + 180) % 360, 20, 8);
-  
-  // Draw the gradient by interpolating line-by-line
+  background(0);
+  // Simpler gradient using current colorHue
   for (let y = 0; y < height; y++) {
     let inter = map(y, 0, height, 0, 1);
-    let c = lerpColor(c1, c2, inter);
+    let c = lerpColor(
+      color(colorHue, 70, 5),
+      color((colorHue + 180) % 360, 70, 3),
+      inter
+    );
     stroke(c);
     line(0, y, width, y);
   }
+  
+  // Draw stars in the same hue
+  push();
+  blendMode(SCREEN);
+  noStroke();
+  stars.forEach(star => {
+    // Update position
+    star.x += cos(star.angle) * star.speed;
+    star.y += sin(star.angle) * star.speed;
+    
+    // Add current position to trail
+    star.trail.unshift({x: star.x, y: star.y});
+    if (star.trail.length > TRAIL_LENGTH) star.trail.pop();
+    
+    // Draw trail using same colorHue
+    star.trail.forEach((pos, i) => {
+      let alpha = map(i, 0, star.trail.length, 0.3, 0);
+      fill(colorHue, 50, 80, alpha);
+      circle(pos.x, pos.y, star.size);
+    });
+    
+    // Wrap around screen
+    if (star.x < 0) star.x = width;
+    if (star.x > width) star.x = 0;
+    if (star.y < 0) star.y = height;
+    if (star.y > height) star.y = 0;
+  });
+  pop();
 }
 
 function updateUI() {
@@ -283,9 +338,9 @@ function updateUI() {
   let totalTime = formatTime(song.duration());
   select('.time-display').html(`${currentTime} / ${totalTime}`);
   
-  // Update the visualization intensity based on the current volume
-  let volumeScale = map(smoothedVolume, 0, 1, 0.5, 2);
-  document.documentElement.style.setProperty('--intensity-scale', volumeScale);
+  // Remove or comment out:
+  // let volumeScale = map(smoothedVolume, 0, 1, 0.5, 3);
+  // document.documentElement.style.setProperty('--intensity-scale', volumeScale);
 }
 
 function formatTime(seconds) {
