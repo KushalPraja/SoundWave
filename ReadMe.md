@@ -15,11 +15,11 @@ This project is a music visualization tool that creates dynamic visual represent
 
 1. Clone the repository:
   ```sh
-  git clone https://github.com/yourusername/music-vis.git
+  git clone https://github.com/KushalPraja/SoundWave
   ```
 2. Navigate to the project directory:
   ```sh
-  cd music-vis
+  cd SoundWave
   ```
 
 ## Usage
